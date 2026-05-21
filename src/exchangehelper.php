@@ -152,10 +152,102 @@ final class exchangehelper
         return $this->getContact(id: $id);
     }
 
+    #[McpTool(name: 'contacts_create')]
+    public function contactsCreate(
+        string $display_name,
+        ?string $email = null,
+        ?string $mobile_phone = null,
+        ?string $company_name = null,
+        ?string $job_title = null
+    ): array {
+        return $this->addContact([
+            'display_name' => $display_name,
+            'emails' => self::stringList([$email]),
+            'phones' => [
+                'mobile' => self::stringList([$mobile_phone])
+            ],
+            'company_name' => $company_name,
+            'job_title' => $job_title
+        ]);
+    }
+
+    #[McpTool(name: 'contacts_update')]
+    public function contactsUpdate(
+        string $id,
+        ?string $display_name = null,
+        ?string $email = null,
+        ?string $mobile_phone = null,
+        ?string $company_name = null,
+        ?string $job_title = null
+    ): array {
+        return $this->updateContact(id: $id, data: array_filter([
+            'display_name' => $display_name,
+            'emails' => $email === null ? null : self::stringList([$email]),
+            'phones' => $mobile_phone === null ? null : [
+                'mobile' => self::stringList([$mobile_phone])
+            ],
+            'company_name' => $company_name,
+            'job_title' => $job_title
+        ], fn(mixed $value): bool => $value !== null));
+    }
+
+    #[McpTool(name: 'contacts_delete')]
+    public function contactsDelete(string $id): array
+    {
+        $this->removeContact(id: $id);
+        return ['deleted' => true, 'id' => $id];
+    }
+
     #[McpTool(name: 'calendar_list_events')]
     public function calendarListEvents(?string $start = null, ?string $end = null, ?int $limit = null): array
     {
         return ['items' => $this->getCalendarEvents(start: $start, end: $end, limit: $limit ?? 25)];
+    }
+
+    #[McpTool(name: 'calendar_create_event')]
+    public function calendarCreateEvent(
+        string $subject,
+        string $start,
+        string $end,
+        ?string $timezone = 'UTC',
+        ?string $location = null,
+        ?string $body = null
+    ): array {
+        return $this->addCalendarEvent([
+            'subject' => $subject,
+            'start' => $start,
+            'end' => $end,
+            'timezone' => $timezone ?? 'UTC',
+            'location' => $location,
+            'body' => $body
+        ]);
+    }
+
+    #[McpTool(name: 'calendar_update_event')]
+    public function calendarUpdateEvent(
+        string $id,
+        ?string $subject = null,
+        ?string $start = null,
+        ?string $end = null,
+        ?string $timezone = 'UTC',
+        ?string $location = null,
+        ?string $body = null
+    ): array {
+        return $this->updateCalendarEvent(id: $id, data: array_filter([
+            'subject' => $subject,
+            'start' => $start,
+            'end' => $end,
+            'timezone' => $timezone ?? 'UTC',
+            'location' => $location,
+            'body' => $body
+        ], fn(mixed $value): bool => $value !== null));
+    }
+
+    #[McpTool(name: 'calendar_delete_event')]
+    public function calendarDeleteEvent(string $id): array
+    {
+        $this->removeCalendarEvent(id: $id);
+        return ['deleted' => true, 'id' => $id];
     }
 
     #[McpTool(name: 'todo_list_lists')]
@@ -181,6 +273,30 @@ final class exchangehelper
                 'due' => $due
             ]
         );
+    }
+
+    #[McpTool(name: 'todo_update_task')]
+    public function todoUpdateTask(
+        string $list_id,
+        string $id,
+        ?string $title = null,
+        ?string $body = null,
+        ?string $status = null,
+        ?string $due = null
+    ): array {
+        return $this->updateTodoTask(list_id: $list_id, id: $id, data: array_filter([
+            'title' => $title,
+            'body' => $body,
+            'status' => $status,
+            'due' => $due
+        ], fn(mixed $value): bool => $value !== null));
+    }
+
+    #[McpTool(name: 'todo_delete_task')]
+    public function todoDeleteTask(string $list_id, string $id): array
+    {
+        $this->removeTodoTask(list_id: $list_id, id: $id);
+        return ['deleted' => true, 'id' => $id, 'list_id' => $list_id];
     }
 
     public static function normalizeGraphContact(array $contact): array
