@@ -414,7 +414,6 @@ final class exchangehelper
         $response = curl_exec($curl);
         $status = (int) curl_getinfo($curl, CURLINFO_RESPONSE_CODE);
         $error = curl_error($curl);
-        curl_close($curl);
 
         if ($response === false) {
             throw new RuntimeException('exchangehelper: graph request failed: ' . $error);
@@ -487,7 +486,6 @@ final class exchangehelper
         $response = curl_exec($curl);
         $status = (int) curl_getinfo($curl, CURLINFO_RESPONSE_CODE);
         $error = curl_error($curl);
-        curl_close($curl);
 
         if ($response === false) {
             throw new RuntimeException('exchangehelper: token request failed: ' . $error);
