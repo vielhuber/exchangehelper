@@ -27,7 +27,7 @@ require __DIR__ . '/vendor/autoload.php';
 use vielhuber\exchangehelper\exchangehelper;
 ```
 
-## graph setup
+## setup
 
 exchangehelper always reads Microsoft credentials from the `.env` in your project root. do not pass secrets in php.
 
@@ -39,8 +39,6 @@ EXCHANGEHELPER_GRAPH_CLIENT_ID=00000000-0000-0000-0000-000000000000
 EXCHANGEHELPER_GRAPH_CLIENT_SECRET=secret
 EXCHANGEHELPER_GRAPH_USER_ID=user@example.com
 ```
-
-### getting credentials
 
 exchangehelper uses Microsoft Graph application permissions. this is the server-to-server flow:
 
