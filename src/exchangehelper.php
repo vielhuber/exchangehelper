@@ -273,13 +273,10 @@ final class exchangehelper
     private function envConfig(): array
     {
         return [
-            'graph_base_url' => getenv('EXCHANGEHELPER_GRAPH_BASE_URL') ?: self::DEFAULT_GRAPH_BASE_URL,
             'tenant_id' => getenv('EXCHANGEHELPER_GRAPH_TENANT_ID') ?: null,
             'client_id' => getenv('EXCHANGEHELPER_GRAPH_CLIENT_ID') ?: null,
             'client_secret' => getenv('EXCHANGEHELPER_GRAPH_CLIENT_SECRET') ?: null,
-            'refresh_token' => getenv('EXCHANGEHELPER_GRAPH_REFRESH_TOKEN') ?: null,
-            'access_token' => getenv('EXCHANGEHELPER_GRAPH_ACCESS_TOKEN') ?: null,
-            'user_id' => getenv('EXCHANGEHELPER_GRAPH_USER_ID') ?: 'me'
+            'user_id' => getenv('EXCHANGEHELPER_GRAPH_USER_ID') ?: null
         ];
     }
 
@@ -438,7 +435,7 @@ final class exchangehelper
 
     private function buildGraphUrl(string $path, array $query = []): string
     {
-        $base = rtrim((string) ($this->config['graph_base_url'] ?? self::DEFAULT_GRAPH_BASE_URL), '/');
+        $base = self::DEFAULT_GRAPH_BASE_URL;
         $url = $base . '/' . ltrim($path, '/');
         $query = array_filter($query, fn(mixed $value): bool => $value !== null && $value !== '');
         if ($query === []) {
@@ -449,9 +446,9 @@ final class exchangehelper
 
     private function userPath(string $suffix): string
     {
-        $user_id = (string) ($this->config['user_id'] ?? 'me');
+        $user_id = (string) ($this->config['user_id'] ?? '');
         if ($user_id === '' || $user_id === 'me') {
-            return '/me' . $suffix;
+            throw new RuntimeException('exchangehelper: EXCHANGEHELPER_GRAPH_USER_ID must be a concrete user id or email address for server-to-server access.');
         }
         return '/users/' . rawurlencode($user_id) . $suffix;
     }
@@ -459,10 +456,6 @@ final class exchangehelper
     private function getAccessToken(): string
     {
         if ($this->accessToken !== null) {
-            return $this->accessToken;
-        }
-        if (($this->config['access_token'] ?? null) !== null && $this->config['access_token'] !== '') {
-            $this->accessToken = (string) $this->config['access_token'];
             return $this->accessToken;
         }
 
@@ -475,16 +468,10 @@ final class exchangehelper
 
         $payload = [
             'client_id' => $client_id,
-            'client_secret' => $client_secret
+            'client_secret' => $client_secret,
+            'grant_type' => 'client_credentials',
+            'scope' => 'https://graph.microsoft.com/.default'
         ];
-        if (($this->config['refresh_token'] ?? null) !== null && $this->config['refresh_token'] !== '') {
-            $payload['grant_type'] = 'refresh_token';
-            $payload['refresh_token'] = (string) $this->config['refresh_token'];
-            $payload['scope'] = 'offline_access Contacts.ReadWrite Calendars.ReadWrite Tasks.ReadWrite User.Read';
-        } else {
-            $payload['grant_type'] = 'client_credentials';
-            $payload['scope'] = 'https://graph.microsoft.com/.default';
-        }
 
         $curl = curl_init('https://login.microsoftonline.com/' . rawurlencode($tenant_id) . '/oauth2/v2.0/token');
         if ($curl === false) {

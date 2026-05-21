@@ -1,0 +1,48 @@
+name: CI
+
+env:
+    CI: true
+
+on:
+    workflow_dispatch:
+    push:
+        tags:
+            - 'v*'
+            - '[0-9]*'
+
+jobs:
+    build-test:
+        runs-on: ${{ matrix.operating-system }}
+
+        strategy:
+            matrix:
+                operating-system: ['ubuntu-latest', 'macos-latest']
+                php-versions: ['8.3', '8.4', '8.5']
+
+        name: ${{ matrix.operating-system }} (PHP ${{ matrix.php-versions }})
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v6
+
+            - name: PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: '${{ matrix.php-versions }}'
+                  extensions: curl, json, mbstring
+                  tools: composer, phpunit
+
+            - name: Composer
+              run: composer install --no-interaction
+
+            - name: Env
+              run: |
+                  {
+                    echo "EXCHANGEHELPER_GRAPH_TENANT_ID=${{ secrets.EXCHANGEHELPER_GRAPH_TENANT_ID }}"
+                    echo "EXCHANGEHELPER_GRAPH_CLIENT_ID=${{ secrets.EXCHANGEHELPER_GRAPH_CLIENT_ID }}"
+                    echo "EXCHANGEHELPER_GRAPH_CLIENT_SECRET=${{ secrets.EXCHANGEHELPER_GRAPH_CLIENT_SECRET }}"
+                    echo "EXCHANGEHELPER_GRAPH_USER_ID=${{ secrets.EXCHANGEHELPER_GRAPH_USER_ID }}"
+                  } > .env
+
+            - name: PHPUnit
+              run: ./vendor/bin/phpunit

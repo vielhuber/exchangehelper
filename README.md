@@ -33,30 +33,34 @@ exchangehelper always reads Microsoft credentials from the `.env` in your projec
 
 create or extend your existing project `.env`:
 
-delegated access with a refresh token:
-
 ```dotenv
-EXCHANGEHELPER_GRAPH_TENANT_ID=common
+EXCHANGEHELPER_GRAPH_TENANT_ID=example.onmicrosoft.com
 EXCHANGEHELPER_GRAPH_CLIENT_ID=00000000-0000-0000-0000-000000000000
 EXCHANGEHELPER_GRAPH_CLIENT_SECRET=secret
-EXCHANGEHELPER_GRAPH_REFRESH_TOKEN=refresh-token
-EXCHANGEHELPER_GRAPH_USER_ID=me
+EXCHANGEHELPER_GRAPH_USER_ID=user@example.com
 ```
 
-or a ready-to-use access token:
+### getting credentials
+
+exchangehelper uses Microsoft Graph application permissions. this is the server-to-server flow:
+
+1. open [entra app registrations](https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade) and create a new app registration.
+2. copy **application (client) id** to `EXCHANGEHELPER_GRAPH_CLIENT_ID` and **directory (tenant) id** to `EXCHANGEHELPER_GRAPH_TENANT_ID`.
+3. create a client secret under **certificates & secrets** and copy its value to `EXCHANGEHELPER_GRAPH_CLIENT_SECRET`.
+4. open **api permissions**, click **add a permission**, choose **Microsoft Graph**, then choose **application permissions**.
+5. search and add these permissions:
+    - `Contacts.ReadWrite`
+    - `Calendars.ReadWrite`
+    - `Tasks.Read.All`
+    - `Tasks.ReadWrite.All`
+6. click **grant admin consent** for the tenant and confirm the prompt. the status column should show a green checkmark for every permission.
+7. set `EXCHANGEHELPER_GRAPH_USER_ID` to the mailbox user, for example `user@example.com`.
 
 ```dotenv
-EXCHANGEHELPER_GRAPH_ACCESS_TOKEN=eyJ...
-EXCHANGEHELPER_GRAPH_USER_ID=me
-```
-
-with application permissions, set `EXCHANGEHELPER_GRAPH_USER_ID` to the target mailbox user principal name:
-
-```dotenv
-EXCHANGEHELPER_GRAPH_TENANT_ID=contoso.onmicrosoft.com
+EXCHANGEHELPER_GRAPH_TENANT_ID=example.onmicrosoft.com
 EXCHANGEHELPER_GRAPH_CLIENT_ID=00000000-0000-0000-0000-000000000000
 EXCHANGEHELPER_GRAPH_CLIENT_SECRET=secret
-EXCHANGEHELPER_GRAPH_USER_ID=user@contoso.com
+EXCHANGEHELPER_GRAPH_USER_ID=user@example.com
 ```
 
 ```php
@@ -145,3 +149,11 @@ available tools:
 - `todo_list_lists()`
 - `todo_list_tasks(list_id?)`
 - `todo_create_task(list_id, title, body?, due?)`
+
+## tests
+
+the test suite reads the project `.env`. if Microsoft Graph credentials are present, it runs one live test against that server; otherwise the live test is skipped. the live test only creates/update/deletes its own `exchangehelper integration ...` test entries:
+
+```bash
+vendor/bin/phpunit
+```
